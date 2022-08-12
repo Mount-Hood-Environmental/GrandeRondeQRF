@@ -37,10 +37,16 @@ huc12_sf = st_read(paste0(nas_prefix, "main/data/habitat/watershed_boundaries/WB
 # if needed, these files can be saved locally to decrease read times, e.g.,
 # on Mike's machine...
 sum_juv_sf = st_read("C:/Workspace/qrf/Rch_Cap_RF_No_elev_juv_summer.shp") %>%
+  mutate(chnk = as.logical(chnk),
+         sthd = as.logical(sthd)) %>%
   st_transform(gr_crs)
 win_juv_sf = st_read("C:/Workspace/qrf/Rch_Cap_RF_No_elev_juv_winter.shp") %>%
+  mutate(chnk = as.logical(chnk),
+         sthd = as.logical(sthd)) %>%
   st_transform(gr_crs)
 redd_sf = st_read("C:/Workspace/qrf/Rch_Cap_RF_No_elev_redds.shp") %>%
+  mutate(chnk = as.logical(chnk),
+         sthd = as.logical(sthd)) %>%
   st_transform(gr_crs)
 # these are too large to reasonably plot
 
