@@ -66,8 +66,6 @@ options(knitr.kable.NA = '--')
 ```
 
 ```{r load-libraries}
-# run this if running chunks directly
-
 # for formatting
 library(kableExtra)
 library(ggpubr)
@@ -112,15 +110,39 @@ load(here("analysis/data/derived_data/gr_qrf_extrapolations.rda"))
 load(here("analysis/data/derived_data/gr_spatial.rda"))
 
 # convert sf objects to tibbles
-gr_sum_df = gr_sum_sf %>%
+cc_sum_df = cc_sum_sf %>%
+  st_drop_geometry() %>%
+  as_tibble() 
+
+cc_win_df = cc_win_sf %>%
   st_drop_geometry() %>%
   as_tibble()
 
-gr_win_df = gr_win_sf %>%
+cc_redd_df = cc_redd_sf %>%
   st_drop_geometry() %>%
   as_tibble()
 
-gr_redd_df = gr_redd_sf %>%
+ugr_sum_df = ugr_sum_sf %>%
+  st_drop_geometry() %>%
+  as_tibble()
+
+ugr_win_df = ugr_win_sf %>%
+  st_drop_geometry() %>%
+  as_tibble()
+
+ugr_redd_df = ugr_redd_sf %>%
+  st_drop_geometry() %>%
+  as_tibble()
+
+look_sum_df = look_sum_sf %>%
+  st_drop_geometry() %>%
+  as_tibble()
+
+look_win_df = look_win_sf %>%
+  st_drop_geometry() %>%
+  as_tibble()
+
+look_redd_df = look_redd_sf %>%
   st_drop_geometry() %>%
   as_tibble()
 
@@ -189,6 +211,142 @@ gaa_hab_dict %>%
 
 
 ### QRF Capacity Estimates
+
+```{r calc-chnk-capacity}
+source(here("analysis/scripts/calc_watershed_cap.R"))
+
+# catherine creek, chinook salmon, summer juveniles
+cc_chnk_sum_cap = calc_watershed_cap(cc_poly,
+                                     cc_sum_sf,
+                                     capacity_name = "chnk_per_m",
+                                     capacity_se_name = "chnk_per_1",
+                                     by_stream = T)
+
+# catherine creek, chinook salmon, winter juveniles
+cc_chnk_win_cap = calc_watershed_cap(cc_poly,
+                                     cc_win_sf,
+                                     capacity_name = "chnk_per_m",
+                                     capacity_se_name = "chnk_per_1",
+                                     by_stream = T)
+
+# catherine creek, chinook salmon, redds
+cc_chnk_redd_cap = calc_watershed_cap(cc_poly,
+                                      cc_redd_sf,
+                                      capacity_name = "chnk_per_m",
+                                      capacity_se_name = "chnk_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, chinook salmon, summer juveniles
+ugr_chnk_sum_cap = calc_watershed_cap(ugr_poly,
+                                      ugr_sum_sf,
+                                      capacity_name = "chnk_per_m",
+                                      capacity_se_name = "chnk_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, chinook salmon, winter juveniles
+ugr_chnk_win_cap = calc_watershed_cap(ugr_poly,
+                                      ugr_win_sf,
+                                      capacity_name = "chnk_per_m",
+                                      capacity_se_name = "chnk_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, chinook salmon, redds
+ugr_chnk_redd_cap = calc_watershed_cap(ugr_poly,
+                                       ugr_redd_sf,
+                                       capacity_name = "chnk_per_m",
+                                       capacity_se_name = "chnk_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, chinook salmon, summer juveniles
+look_chnk_sum_cap = calc_watershed_cap(look_poly,
+                                       look_sum_sf,
+                                       capacity_name = "chnk_per_m",
+                                       capacity_se_name = "chnk_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, chinook salmon, winter juveniles
+look_chnk_win_cap = calc_watershed_cap(look_poly,
+                                       look_win_sf,
+                                       capacity_name = "chnk_per_m",
+                                       capacity_se_name = "chnk_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, chinook salmon, redds
+look_chnk_redd_cap = calc_watershed_cap(look_poly,
+                                        look_redd_sf,
+                                        capacity_name = "chnk_per_m",
+                                        capacity_se_name = "chnk_per_1",
+                                        by_stream = T)
+
+
+
+```
+
+```{r calc-sthd-capacity}
+# catherine creek, steelhead, summer juveniles
+cc_sthd_sum_cap = calc_watershed_cap(cc_poly,
+                                     cc_sum_sf,
+                                     capacity_name = "sthd_per_m",
+                                     capacity_se_name = "sthd_per_1",
+                                     by_stream = T)
+
+# catherine creek, steelhead, winter juveniles
+cc_sthd_win_cap = calc_watershed_cap(cc_poly,
+                                     cc_win_sf,
+                                     capacity_name = "sthd_per_m",
+                                     capacity_se_name = "sthd_per_1",
+                                     by_stream = T)
+
+# catherine creek, steelhead, redds
+cc_sthd_redd_cap = calc_watershed_cap(cc_poly,
+                                      cc_redd_sf,
+                                      capacity_name = "sthd_per_m",
+                                      capacity_se_name = "sthd_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, steelhead, summer juveniles
+ugr_sthd_sum_cap = calc_watershed_cap(ugr_poly,
+                                      ugr_sum_sf,
+                                      capacity_name = "sthd_per_m",
+                                      capacity_se_name = "sthd_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, steelhead, winter juveniles
+ugr_sthd_win_cap = calc_watershed_cap(ugr_poly,
+                                      ugr_win_sf,
+                                      capacity_name = "sthd_per_m",
+                                      capacity_se_name = "sthd_per_1",
+                                      by_stream = T)
+
+# upper grande ronde, steelhead, redds
+ugr_sthd_redd_cap = calc_watershed_cap(ugr_poly,
+                                       ugr_redd_sf,
+                                       capacity_name = "sthd_per_m",
+                                       capacity_se_name = "sthd_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, steelhead, summer juveniles
+look_sthd_sum_cap = calc_watershed_cap(look_poly,
+                                       look_sum_sf,
+                                       capacity_name = "sthd_per_m",
+                                       capacity_se_name = "sthd_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, steelhead, winter juveniles
+look_sthd_win_cap = calc_watershed_cap(look_poly,
+                                       look_win_sf,
+                                       capacity_name = "sthd_per_m",
+                                       capacity_se_name = "sthd_per_1",
+                                       by_stream = T)
+
+# lookingglass creek, steelhead, redds
+look_sthd_redd_cap = calc_watershed_cap(look_poly,
+                                        look_redd_sf,
+                                        capacity_name = "sthd_per_m",
+                                        capacity_se_name = "sthd_per_1",
+                                        by_stream = T)
+
+```
 
 
 
