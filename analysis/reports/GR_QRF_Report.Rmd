@@ -86,7 +86,7 @@ theme_set(theme_pubr(x.text.angle = 45,
 
 # Background
 
-The decline of anadromous Pacific salmonid populations (*Oncorhynchus* spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., @NOAA2009) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for spring-run Chinook salmon (hereafter Chinook salmon) and summer-run steelhead (hereafter steelhead) to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals in the Upper Walla Walla watershed. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.
+The decline of anadromous Pacific salmonid populations (*Oncorhynchus* spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., @NOAA2009) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for spring-run Chinook salmon (hereafter Chinook salmon) and summer-run steelhead (hereafter steelhead) to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals for target watersheds in the Grande Ronde Basin. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.
 
 
 ## Focal Species
@@ -94,7 +94,7 @@ The decline of anadromous Pacific salmonid populations (*Oncorhynchus* spp.) acr
 The focal species for this QRF habitat capacity assessment are, both of which are ESA-listed threatened:
 
 * Snake River spring/summer-run Chinook salmon (*Oncorhynchus tshawytscha*; hereafter Chinook salmon)
-* Snake River summer-run steelhead (*O. mykiss*; hereafter steelhead; ESA-listed threatened)
+* Snake River summer-run steelhead (*O. mykiss*; hereafter steelhead)
 
 
 ## Study Area
@@ -163,6 +163,32 @@ QRF_new_hab_cov_tbl %>%
                 bootstrap_options = c("striped", "condensed"))
 
 ```
+
+
+### Extrapolation Model
+
+Although we have hundreds of sites across the Columbia River basin with detailed habitat data that were used to estimate capacity with the QRF model, this only covers a small percentage of the anadromous zone within each watershed. Additionally, many watersheds do not contain any sites. Therefore, we extrapolated our capacity predictions to the areas between CHaMP sites using a [stream layer](https://www.nwfsc.noaa.gov/research/datatech/data/col_basin_hist_project/index.cfm) available from NOAA fisheries. This layer consists of a polyline shapefile divided into 200m reaches with various attributes associated with each reach. We refer to these as globally available attributes (GAAs) because they are associated with every reach across all watersheds in the Columbia River Basin. The shapefile is derived  from the [National Hydrography Dataset High Resolution](https://www.usgs.gov/core-science-systems/ngp/national-hydrography/nhdplus-high-resolution) (NHDPlus HR) dataset, which has a high resolution, 1:24,000.
+
+We estimated capacity for target watersheds in the Grande Ronde basin by quantifying the relationships between GAAs and QRF capacity predictions at all of the sites used the populate the QRF model. This was conducted using a second random forest model, with GAAs as covariates and QRF-predicted densities (linear or areal) as the response. The random forest approach allows for non-linear associations between capacity and GAAs, and constricts capacity predictions within the estimated range from the initial QRF model. Densities predictions for the Grande Ronde watersheds were calculated for 200m reach segments using the random forest model with GAA inputs, and reach capacity was calculated by multiplying the predicted fish/m by the length of the reach. Capacity for specific regions were then calculated by summing capacities for all reaches within the region.
+
+```{r gaa-tbl}
+load(here("analysis/data/derived_data/gaa_hab_dict.rda"))
+
+gaa_hab_dict %>% 
+  select(Metric = Name,
+         Decription = DescriptiveText) %>%
+  kable(booktabs = T,
+        align = "cl",
+        caption = "Globally available attritibutes (GAAs) and their descriptions used in the random forest extrapolation model.") %>%
+  kable_styling(full_width = F,
+                position = "center",
+                bootstrap_options = c("striped", "condensed"))
+
+
+```
+
+
+### QRF Capacity Estimates
 
 
 

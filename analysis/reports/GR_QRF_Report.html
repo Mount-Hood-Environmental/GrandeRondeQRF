@@ -1800,13 +1800,13 @@ div.tocify {
 </script>
 <div id="background" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Background</h1>
-<p>The decline of anadromous Pacific salmonid populations (<em>Oncorhynchus</em> spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., <span class="citation">NOAA (2009)</span>) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for spring-run Chinook salmon (hereafter Chinook salmon) and summer-run steelhead (hereafter steelhead) to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals in the Upper Walla Walla watershed. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.</p>
+<p>The decline of anadromous Pacific salmonid populations (<em>Oncorhynchus</em> spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., <span class="citation">NOAA (2009)</span>) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for spring-run Chinook salmon (hereafter Chinook salmon) and summer-run steelhead (hereafter steelhead) to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals for target watersheds in the Grande Ronde Basin. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.</p>
 <div id="focal-species" class="section level2" number="1.1">
 <h2><span class="header-section-number">1.1</span> Focal Species</h2>
 <p>The focal species for this QRF habitat capacity assessment are, both of which are ESA-listed threatened:</p>
 <ul>
 <li>Snake River spring/summer-run Chinook salmon (<em>Oncorhynchus tshawytscha</em>; hereafter Chinook salmon)</li>
-<li>Snake River summer-run steelhead (<em>O. mykiss</em>; hereafter steelhead; ESA-listed threatened)</li>
+<li>Snake River summer-run steelhead (<em>O. mykiss</em>; hereafter steelhead)</li>
 </ul>
 </div>
 <div id="study-area" class="section level2" number="1.2">
@@ -2454,6 +2454,135 @@ Number of large wood pieces per 100 meters within the wetted channel.
 </tr>
 </tbody>
 </table>
+</div>
+<div id="extrapolation-model" class="section level3" number="2.3.2">
+<h3><span class="header-section-number">2.3.2</span> Extrapolation Model</h3>
+<p>Although we have hundreds of sites across the Columbia River basin with detailed habitat data that were used to estimate capacity with the QRF model, this only covers a small percentage of the anadromous zone within each watershed. Additionally, many watersheds do not contain any sites. Therefore, we extrapolated our capacity predictions to the areas between CHaMP sites using a <a href="https://www.nwfsc.noaa.gov/research/datatech/data/col_basin_hist_project/index.cfm">stream layer</a> available from NOAA fisheries. This layer consists of a polyline shapefile divided into 200m reaches with various attributes associated with each reach. We refer to these as globally available attributes (GAAs) because they are associated with every reach across all watersheds in the Columbia River Basin. The shapefile is derived from the <a href="https://www.usgs.gov/core-science-systems/ngp/national-hydrography/nhdplus-high-resolution">National Hydrography Dataset High Resolution</a> (NHDPlus HR) dataset, which has a high resolution, 1:24,000.</p>
+<p>We estimated capacity for target watersheds in the Grande Ronde basin by quantifying the relationships between GAAs and QRF capacity predictions at all of the sites used the populate the QRF model. This was conducted using a second random forest model, with GAAs as covariates and QRF-predicted densities (linear or areal) as the response. The random forest approach allows for non-linear associations between capacity and GAAs, and constricts capacity predictions within the estimated range from the initial QRF model. Densities predictions for the Grande Ronde watersheds were calculated for 200m reach segments using the random forest model with GAA inputs, and reach capacity was calculated by multiplying the predicted fish/m by the length of the reach. Capacity for specific regions were then calculated by summing capacities for all reaches within the region.</p>
+<table class="table table-striped table-condensed" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:gaa-tbl">Table 2.2: </span>Globally available attritibutes (GAAs) and their descriptions used in the random forest extrapolation model.
+</caption>
+<thead>
+<tr>
+<th style="text-align:center;">
+Metric
+</th>
+<th style="text-align:left;">
+Decription
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+Gradient %
+</td>
+<td style="text-align:left;">
+Stream gradient (%).
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Sinuosity
+</td>
+<td style="text-align:left;">
+Reach sinuosity. 1 = straight, 1 &lt; sinuous.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Alpine accumulation
+</td>
+<td style="text-align:left;">
+Number of upstream cells in alpine terrain.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Fines accumulation
+</td>
+<td style="text-align:left;">
+Number of upstream cells in fine grain lithologies.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Flow accumulation
+</td>
+<td style="text-align:left;">
+Number of upstream DEM cells flowing into reach.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Gravel accumulation
+</td>
+<td style="text-align:left;">
+Number of upstream cells in gravel producing lithologies.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Precipitation accumulation
+</td>
+<td style="text-align:left;">
+Number of upstream cells weighted by average annual precipitation.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Floodplain width
+</td>
+<td style="text-align:left;">
+Current unmodified floodplain width.
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Avg Aug stream temperature
+</td>
+<td style="text-align:left;">
+Historical composite scenario representing 10 year average August mean stream temperatures for 2002-2011 (Isaak et al. 2017).
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Disturbance PCA 1
+</td>
+<td style="text-align:left;">
+Disturbance Classification PCA 1 Score (Whittier et al. 2011).
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Natural PCA 1
+</td>
+<td style="text-align:left;">
+Natural Classification PCA 1 Score (Whittier et al. 2011).
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Natural PCA 2
+</td>
+<td style="text-align:left;">
+Natural Classification PCA 2 Score (Whittier et al. 2011).
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Elevation
+</td>
+<td style="text-align:left;">
+Elevation at downstream end of reach
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="qrf-capacity-estimates" class="section level3" number="2.3.3">
+<h3><span class="header-section-number">2.3.3</span> QRF Capacity Estimates</h3>
 </div>
 </div>
 </div>
