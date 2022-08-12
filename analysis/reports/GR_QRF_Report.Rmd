@@ -68,3 +68,5 @@ knitr::opts_chunk$set(
 options(knitr.kable.NA = '--')
 
 ```
+
+# Background
