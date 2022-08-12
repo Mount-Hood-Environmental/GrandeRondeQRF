@@ -126,6 +126,7 @@ gr_redd_df = gr_redd_sf %>%
 
 ```
 
+
 ## Approach Overview
 
 The habitat capacity assessment is focused on Chinook salmon and steelhead. Habitat capacity deficits (e.g., Figure \@ref(fig:capacity-schematic)) resulting from limitations in habitat quantity and/or quality were assessed for three life stages of Chinook salmon and steelhead: 1) spawning (redd) capacity, 2) juvenile summer rearing capacity, and 3) juvenile winter rearing capacity. First, the capacity required to meet adult abundance escapement goals was estimated for each of the three life-stages using a Generalized Capacity Model framework [see Appendix C in @IdahoOSCTeam2019]. Then, the currently available habitat capacity was estimated using a quantile random forest (QRF) approach [@See2021] applied at each life-stage. Next, capacity limitations were quantified by subtracting required capacity from available capacity, providing an estimate of habitat capacity deficit by species and life-stage. Finally, these results can determine the target conditions required to achieve adult escapement goals, and inform prioritization by identifying species and life-stage specific bottlenecks to population productivity in target watersheds within the Grande Ronde basin.
@@ -134,6 +135,35 @@ The habitat capacity assessment is focused on Chinook salmon and steelhead. Habi
 knitr::include_graphics("../figures/hab-capac-fig.png")
 
 ```
+
+
+## Required Capacity
+
+To add later...
+
+
+## Available Capacity
+
+We define the available habitat carrying capacity as the maximal abundance or load the habitat can support for a given species and life-stage with current resources and habitat quantity and quality. Within fisheries research and management, it has been recognized that biotic and abiotic factors limit productivity within and across life-stages. However, we assume that observed fish density is a poor predictor of habitat capacity due to both a paucity of individuals (e.g., low spawner abundance) and the existence of unmeasured biotic or abiotic variables that may limit capacity. Therefore, available habitat capacity estimates were generated using a QRF framework developed by @See2021.
+
+
+### QRF Model
+
+The QRF model is a novel approach to estimate the carrying capacity of wadable streams to support spawning and rearing Chinook salmon and steelhead. The approach involves fitting a QRF [@Meinshausen2006; @Cade2003] model to paired fish and habitat data across hundreds of sites in seven watersheds within the Columbia River Basin. Habitat data from the Colmbia Habitat Monitoring Program (CHaMP) were paired to juvenile fish and redd survey data to develop fish-habitat relationships [@See2021]. Importantly, the QRF model places no constraints on possible fish-habitat relationships; instead, relationships are estimated from the empirical data regardless of being positive, negative, linear, non-linear, etc. The QRF approach enables spatially continuous estimates of available habitat capacity given existing conditions at key life-stages for Chinook salmon and steelhead. Currently, available QRF models allow evaluation of three anadromous life stages: 1) spawning (redd) capacity, 2) juvenile (parr) summer rearing capacity, and 3) juvenile (presmolt) winter rearing capacity. Using the observed fish-habitat relationships, we can predict habitat capacity at any location with habitat data for all model covariates (e.g., at all CHaMP sites) (Table \@ref(tab:cov-tab)). The random forest model produces a distribution of predictions, one for each tree in the forest, and we chose the 90th quantile of that distribution as a proxy for carrying capacity. The QRF models used to estimate available habitat capacity, including data inputs, are described in further detail in Appendix B of @IdahoOSCTeam2019.
+
+```{r cov-tab}
+load(here("analysis/data/derived_data/QRF_cov_tbl.rda"))
+
+QRF_new_hab_cov_tbl %>%
+  select(-Covariate) %>%
+  kable(booktabs = T,
+        align = "ccccccccl",
+        caption = "Habitat covariates and their descriptions used in each of the QRF capacity models. Numbers indicate where each metric ranked in relative importance for each model. Dots indicate a metric was not used for a given model.") %>%
+  kable_styling(position = "center",
+                bootstrap_options = c("striped", "condensed"))
+
+```
+
 
 
 # Literature Cited
