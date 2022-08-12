@@ -348,6 +348,489 @@ look_sthd_redd_cap = calc_watershed_cap(look_poly,
 
 ```
 
+```{r compile-capacity}
+cap_totals = list(cc_chnk_sum = cc_chnk_sum_cap,
+                  cc_chnk_win = cc_chnk_win_cap,
+                  cc_chnk_redd = cc_chnk_redd_cap,
+                  ugr_chnk_sum = ugr_chnk_sum_cap,
+                  ugr_chnk_win = ugr_chnk_win_cap,
+                  ugr_chnk_redd = ugr_chnk_redd_cap,
+                  look_chnk_sum = look_chnk_sum_cap,
+                  look_chnk_win = look_chnk_win_cap,
+                  look_chnk_redd = look_chnk_redd_cap,
+                  cc_sthd_sum = cc_sthd_sum_cap,
+                  cc_sthd_win = cc_sthd_win_cap,
+                  cc_sthd_redd = cc_sthd_redd_cap,
+                  ugr_sthd_sum = ugr_sthd_sum_cap,
+                  ugr_sthd_win = ugr_sthd_win_cap,
+                  ugr_sthd_redd = ugr_sthd_redd_cap,
+                  look_sthd_sum = look_sthd_sum_cap,
+                  look_sthd_win = look_sthd_win_cap,
+                  look_sthd_redd = look_sthd_redd_cap) %>%
+  map_df(.id = "type",
+        .f = function(x) {
+          x %>%
+            filter(StreamName == "Total")
+        }) %>%
+  mutate(Watershed = str_split(type, "_", simplify = T)[ ,1],
+         Species = str_split(type, "_", simplify = T)[ ,2],
+         LifeStage = str_split(type, "_", simplify = T)[ ,3],
+         tot_cap_90CI_L = tot_cap - tot_cap_se*1.65,
+         tot_cap_90CI_U = tot_cap + tot_cap_se*1.65) %>%
+  mutate(Watershed = recode(Watershed,
+                            "cc" = "Catherine Creek",
+                            "ugr" = "Upper Grande Ronde",
+                            "look" = "Lookingglass Creek"),
+         Species = recode(Species,
+                          "chnk" = "Chinook",
+                          "sthd" = "Steelhead"),
+         LifeStage = recode(LifeStage,
+                            "sum" = "Summer Juveniles",
+                            "win" = "Winter Juveniles",
+                            "redd" = "Redds")) %>%
+  select(Watershed,
+         Species,
+         LifeStage,
+         everything(),
+         -StreamName,
+         -type)
+
+```
+
+Estimates of total habitat capacity for target watersheds in the Grande Ronde Basin by species and life-stage are shown in Table \@ref(tab:cap-table). Estimates were made using the anadromous spatial domain defined in [StreamNet](https://www.streamnet.org/home/data-maps/gis-data-sets/) for Chinook salmon and steelhead. Capacity was extrapolated within these domains for `r unique(cap_totals$n_rchs[cap_totals$Species == "Chinook"])` reaches totaling `r round(unique(cap_totals$tot_length[cap_totals$Species == "Chinook"]) / 1000)` km in length for Chinook salmon and `r prettyNum(unique(cap_totals$n_rchs[cap_totals$Species == "Steelhead"]), big.mark = ",")` reaches totaling `r round(unique(cap_totals$tot_length[cap_totals$Species == "Steelhead"]) / 1000)` km in length for steelhead. Different spatial domains could be used for both Chinook salmon and steelhead if deemed appropriate. Capacity estimates for individual streams by species and life stage are provided in [Supplemental Tables and Figures](#supplemental-tables-and-figures). 
+
+```{r cap-table}
+cap_totals %>%
+  mutate(avg_cap_per_m = tot_cap / tot_length) %>%
+  mutate(tot_length_km = tot_length / 1000,
+         `90% CI` = paste0("(", round(tot_cap_90CI_L, 0), "-", round(tot_cap_90CI_U, 0),")")) %>%
+  rename(`n Reaches` = n_rchs,
+         `Stream Length (km)` = tot_length_km,
+         Capacity = tot_cap,
+         SE = tot_cap_se,
+         `Avg. Capacity / m` = avg_cap_per_m) %>%
+  select(Watershed,
+         Species,
+         LifeStage,
+         `n Reaches`,
+         `Stream Length (km)`,
+         Capacity,
+         SE,
+         `90% CI`,
+         `Avg. Capacity / m`) %>%
+  kable(booktabs = T,
+        digits = c(0, 0, 1, 0, 0, 0, 0, 3),
+        align = "ccccccccc",
+        format.args = list(big.mark = ","),
+        col.names = c("Watershed","Species","Life-stage","Reaches","Stream Length (km)", "Capacity","SE", "Capacity 90% CI","Avg. Capacity/m"),
+        caption = "Estimates of current available watershed capacity by species and life-stage.") %>%
+  kable_styling(full_width = F,
+                position = "center",
+                bootstrap_options = c("striped", "condensed"))
+
+```
+
+Maps depicting capacity extrapolations are useful to visualize low- versus high-capacity areas and can inform prioritization efforts. Data used to generate these maps have been exported in geopackage file format and are available in the [GrandeRondeQRF GitHub repository](https://github.com/Mount-Hood-Environmental/GrandeRondeQRF). Chinook salmon and steelhead capacity extrapolations are shown in Figures \@ref(fig:sthd-maps) and \@ref(fig:sthd-maps), respectively.
+
+```{r create-chnk-maps}
+# pick a background river color
+river_color = "lightskyblue1"
+
+# catherine creek, chinook salmon, summer juveniles
+cc_chnk_sum_map = cc_sum_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_sum_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Chinook, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# catherine creek, chinook salmon, winter juveniles
+cc_chnk_win_map = cc_win_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_win_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Chinook, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# catherine creek, chinook salmon, redds
+cc_chnk_redd_map = cc_redd_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_redd_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Chinook, Redds",
+       color = expression(`Redds` / m^2))
+
+# upper grande ronde, chinook salmon, summer juveniles
+ugr_chnk_sum_map = ugr_sum_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_sum_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Chinook, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# upper grande ronde, chinook salmon, winter juveniles
+ugr_chnk_win_map = ugr_win_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_win_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Chinook, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# upper grande ronde, chinook salmon, redds
+ugr_chnk_redd_map = ugr_redd_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_redd_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Chinook, Redds",
+       color = expression(`Redds` / m^2))
+
+# lookingglass creek, chinook salmon, summer juveniles
+look_chnk_sum_map = look_sum_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_sum_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Chinook, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# lookingglass creek, chinook salmon, winter juveniles
+look_chnk_win_map = look_win_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_win_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Chinook, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# lookingglass creek, chinook salmon, redds
+look_chnk_redd_map = look_redd_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_redd_sf %>%
+            filter(chnk),
+          aes(color = chnk_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Chinook, Redds",
+       color = expression(`Redds` / m^2))
+
+```
+
+```{r chnk-maps, fig.cap = "Extrapolations of habitat capacity for Chinook salmon, by life-stage, for target watersheds within the Grande Ronde Basin."}
+ggarrange(cc_chnk_sum_map,
+          cc_chnk_win_map,
+          cc_chnk_redd_map,
+          ugr_chnk_sum_map,
+          ugr_chnk_win_map,
+          ugr_chnk_redd_map,
+          look_chnk_sum_map,
+          look_chnk_win_map,
+          look_chnk_redd_map)
+
+```
+
+```{r create-sthd-maps}
+# catherine creek, steelhead, summer juveniles
+cc_sthd_sum_map = cc_sum_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_sum_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Steelhead, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# catherine creek, steelhead, winter juveniles
+cc_sthd_win_map = cc_win_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_win_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Steelhead, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# catherine creek, steelhead, redds
+cc_sthd_redd_map = cc_redd_sf %>%
+  ggplot() +
+  geom_sf(data = cc_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = cc_redd_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "CC, Steelhead, Redds",
+       color = expression(`Redds` / m^2))
+
+# upper grande ronde, steelhead, summer juveniles
+ugr_sthd_sum_map = ugr_sum_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_sum_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Steelhead, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# upper grande ronde, steelhead, winter juveniles
+ugr_sthd_win_map = ugr_win_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_win_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Steelhead, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# upper grande ronde, steelhead, redds
+ugr_sthd_redd_map = ugr_redd_sf %>%
+  ggplot() +
+  geom_sf(data = ugr_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = ugr_redd_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "UGR, Steelhead, Redds",
+       color = expression(`Redds` / m^2))
+
+# lookingglass creek, steelhead, summer juveniles
+look_sthd_sum_map = look_sum_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_sum_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Steelhead, Summer Juveniles",
+       color = expression(`Summer Juv` / m^2))
+
+# lookingglass creek, steelhead, winter juveniles
+look_sthd_win_map = look_win_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_win_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Steelhead, Winter Juveniles",
+       color = expression(`Winter Juv` / m^2))
+
+# lookingglass creek, steelhead, redds
+look_sthd_redd_map = look_redd_sf %>%
+  ggplot() +
+  geom_sf(data = look_poly,
+          fill = NA,
+          color = "gray50") +
+  geom_sf(color = river_color) +
+  geom_sf(data = look_redd_sf %>%
+            filter(sthd),
+          aes(color = sthd_per_3),
+          size = 1) +
+  scale_color_viridis_c(direction = -1) +
+  #theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank()) +
+  labs(title = "LGC, Steelhead, Redds",
+       color = expression(`Redds` / m^2))
+
+```
+
+```{r sthd-maps, fig.cap = "Extrapolations of habitat capacity for steelhead, by life-stage, for target watersheds within the Grande Ronde Basin."}
+ggarrange(cc_sthd_sum_map,
+          cc_sthd_win_map,
+          cc_sthd_redd_map,
+          ugr_sthd_sum_map,
+          ugr_sthd_win_map,
+          ugr_sthd_redd_map,
+          look_sthd_sum_map,
+          look_sthd_win_map,
+          look_sthd_redd_map)
+
+```
+
+
+## Capacity Limitations
+
+Capacity limitation stuff here...
 
 
 # Literature Cited
