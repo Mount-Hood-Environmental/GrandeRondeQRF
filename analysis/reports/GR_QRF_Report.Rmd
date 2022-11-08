@@ -1,5 +1,5 @@
 ---
-title: "Grande Ronde Basin - Habitat Capacity Assessment"
+title: "Upper Grande Ronde Subbasin - Habitat Capacity Assessment (PRELIMINARY)"
 author:
   - Michael W. Ackerman:
       email: mike.ackerman@mthoodenvironmental.com
@@ -84,20 +84,17 @@ theme_set(theme_pubr(x.text.angle = 45,
 
 # Background
 
-The decline of anadromous Pacific salmonid populations (*Oncorhynchus* spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., @NOAA2009) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for spring-run Chinook salmon (hereafter Chinook salmon) and summer-run steelhead (hereafter steelhead) to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals for target watersheds in the Grande Ronde Basin. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.
+The decline of anadromous Pacific salmonid populations (*Oncorhynchus* spp.) across the Pacific Northwest, USA, has prompted numerous actions aimed at reversing that trend. These actions are often categorized into four ‘H’s’ - harvest modification, habitat rehabilitation, hydroelectric operations, and hatchery practices. While these actions can influence salmonid survival, predicting the potential magnitude of population uplift and developing the most cost-effective and sustainable solutions is a complex task that results in substantial uncertainties. Recovery plans (e.g., @NOAA2009; @CBPTF2020) have identified adult escapement targets at the population scale, providing a quantitative metric useful for evaluating the magnitude of survival improvements (across life-stages) required. These abundance targets provide a benchmark against which habitat rehabilitation actions can be measured. Here, we apply a novel approach to estimating life-stage specific habitat capacity for Chinook salmon and steelhead to quantify the magnitude and types of tributary habitat restoration needed to achieve recovery goals for target watersheds in the Upper Grande Ronde Subbasin. The necessity of tributary habitat restoration actions can now be demonstrated, and the magnitude of required change can be placed in context with the other ‘H’s’.
 
 
 ## Focal Species
 
-The focal species for this QRF habitat capacity assessment are, both of which are ESA-listed threatened:
-
-* Snake River spring/summer-run Chinook salmon (*Oncorhynchus tshawytscha*; hereafter Chinook salmon)
-* Snake River summer-run steelhead (*O. mykiss*; hereafter steelhead)
+The focal species for this QRF habitat capacity assessment include Snake River spring/summer-run Chinook salmon (*Oncorhynchus tshawytscha*; hereafter Chinook salmon) and Snake River summer-run steelhead (*O. mykiss*; hereafter steelhead), both of which are ESA-listed threatened.
 
 
 ## Study Area
 
-This assessment is currently focused on wadable streams within Catherine Creek, the upper Grande Ronde, and Lookingglass Creek.
+This habitat capacity assessment is focused on wadable streams within the Catherine Creek, upper Grande Ronde, and Lookingglass Creek watersheds.
 
 
 # Habitat Capacity Assessment
@@ -151,7 +148,7 @@ look_redd_df = look_redd_sf %>%
 
 ## Approach Overview
 
-The habitat capacity assessment is focused on Chinook salmon and steelhead. Habitat capacity deficits (e.g., Figure \@ref(fig:capacity-schematic)) resulting from limitations in habitat quantity and/or quality were assessed for three life stages of Chinook salmon and steelhead: 1) spawning (redd) capacity, 2) juvenile summer rearing capacity, and 3) juvenile winter rearing capacity. First, the capacity required to meet adult abundance escapement goals was estimated for each of the three life-stages using a Generalized Capacity Model framework [see Appendix C in @IdahoOSCTeam2019]. Then, the currently available habitat capacity was estimated using a quantile random forest (QRF) approach [@See2021] applied at each life-stage. Next, capacity limitations were quantified by subtracting required capacity from available capacity, providing an estimate of habitat capacity deficit by species and life-stage. Finally, these results can determine the target conditions required to achieve adult escapement goals, and inform prioritization by identifying species and life-stage specific bottlenecks to population productivity in target watersheds within the Grande Ronde basin.
+Habitat capacity deficits (e.g., Figure \@ref(fig:capacity-schematic)) resulting from limitations in habitat quantity and/or quality were assessed for three life stages of Chinook salmon and steelhead: 1) spawning (redd) capacity, 2) juvenile summer rearing capacity, and 3) juvenile winter rearing capacity. First, the capacity required to meet adult abundance escapement goals was estimated for each of the three life-stages using a Generalized Capacity Model framework [see Appendix C in @IdahoOSCTeam2019]. Then, the currently available habitat capacity was estimated using a quantile random forest (QRF) model [@See2021] and associated random forest extrapolation model, applied at each life-stage. Next, capacity limitations were quantified by subtracting required capacity from available capacity, providing an estimate of habitat capacity deficit by species and life-stage. These results can help inform 1) target conditions to achieve adult escapement goals and 2) prioritization by identifying species and life-stage specific bottlenecks to population productivity in target watersheds within the Grande Ronde basin.
 
 ```{r capacity-schematic, out.width = "100%", fig.cap = "Schematic depicting an ideal scenario on the left with no limiting factors, while the right depicts a river with significant limiting factors resulting in reduced habitat capacity and production."}
 knitr::include_graphics("../figures/hab-capac-fig.png")
@@ -161,12 +158,181 @@ knitr::include_graphics("../figures/hab-capac-fig.png")
 
 ## Required Capacity
 
-To add later...
+```{r get-params}
+params = read_csv(here("analysis/data/raw_data/LifeHistoryParameters_0622.csv")) %>%
+  filter(Species == "Chinook")
+
+# define target escapement
+target_esc = c(3000, 2000, 4000) # cc, look, ugr
+n.sim = 5000
+
+set.seed(747)
+
+# with normal distribution - no stoch for egg:parr, parr:presmolt
+reqs = tibble(sim_number = rep(1:n.sim, 3),
+              watershed = c(rep("Catherine Creek", n.sim),
+                            rep("Lookingglass Creek", n.sim),
+                            rep("Upper Grande Ronde", n.sim)),
+              escapement = c(rep(target_esc[1], n.sim),
+                             rep(target_esc[2], n.sim),
+                             rep(target_esc[3], n.sim)),
+              f_ratio = c(rnorm(n.sim * 3, params$Value[1], params$SD[1])),
+              redds_f = c(rnorm(n.sim * 3, params$Value[2], params$SD[2])),
+              fecund = c(rnorm(n.sim * 3, params$Value[3], params$SD[3])),
+              egg_to_parr = c(rep(params$Value[4], n.sim * 3)),
+              parr_to_presmolt = c(rep(params$Value[5], n.sim * 3)),
+              egg_to_smolt = c(rnorm(n.sim * 3, params$Value[6], params$SD[6]))) %>%
+  mutate(f_ratio = ifelse(f_ratio < params$Min[1], params$Min[1],
+                          ifelse(f_ratio > params$Max[1], params$Max[1],
+                                 f_ratio)),
+         redds_f = ifelse(redds_f < params$Min[2], params$Min[2],
+                          ifelse(redds_f > params$Max[2], params$Max[2],
+                                 redds_f)),
+         fecund = ifelse(fecund < params$Min[3], params$Min[3],
+                         ifelse(fecund > params$Max[3], params$Max[3],
+                                fecund))) %>%
+  mutate(`Female Escapement` = escapement * f_ratio,
+         Redds = `Female Escapement` * redds_f,
+         Eggs = Redds * fecund,
+         Parr = Eggs * egg_to_parr,
+         Presmolts = Parr * parr_to_presmolt,
+         Smolts = Eggs * egg_to_smolt)
+
+reqs_summary = reqs %>%
+  group_by(watershed) %>%
+  summarize(Escapement = mean(escapement),
+            Female_Escapement_MN = mean(`Female Escapement`),
+            Female_Escapement_SE = sd(`Female Escapement`),
+            Female_Escapement_L90 = quantile(`Female Escapement`, 0.05),
+            Female_Escapement_U90 = quantile(`Female Escapement`, 0.95),
+            Redds_MN = mean(Redds),
+            Redds_SE = sd(Redds),
+            Redds_L90 = quantile(Redds, 0.05),
+            Redds_U90 = quantile(Redds, 0.95),
+            Eggs_MN = mean(Eggs),
+            Eggs_SE = sd(Eggs),
+            Eggs_L90 = quantile(Eggs, 0.05),
+            Eggs_U90 = quantile(Eggs, 0.95),
+            Parr_MN = mean(Parr),
+            Parr_SE = sd(Parr),
+            Parr_L90 = quantile(Parr, 0.05),
+            Parr_U90 = quantile(Parr, 0.95),
+            Presmolts_MN = mean(Presmolts),
+            Presmolts_SE = sd(Presmolts),
+            Presmolts_L90 = quantile(Presmolts, 0.05),
+            Presmolts_U90 = quantile(Presmolts, 0.95),
+            Smolts_MN = mean(Smolts),
+            Smolts_SE = sd(Smolts),
+            Smolts_L90 = quantile(Smolts, 0.05),
+            Smolts_U90 = quantile(Smolts, 0.95))
+
+reqs_plotdat = reqs %>%
+  left_join(reqs_summary, by = "watershed")
+
+# redds simulation result, for example
+redds_plot = ggplot(reqs_plotdat) +
+  geom_density(aes(x = Redds)) +
+  geom_vline(aes(xintercept = Redds_L90), linetype = "dotted") +
+  geom_vline(aes(xintercept = Redds_U90), linetype = "dotted") +
+  facet_wrap(~ watershed) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
+
+# required SARs
+sar_req = target_esc / reqs_summary$Smolts_MN
+
+# recovery goals
+rec_goals = tibble(Species = "Chinook",
+                   Watershed = c("Catherine Creek",
+                                 "Lookingglass Creek",
+                                 "Upper Grande Ronde"),
+                   Scenario = "CBPTF 2020",
+                   Escapement = target_esc) %>%
+  inner_join(params %>%
+               mutate(Parameter = recode(Parameter,
+                                         "Female Ratio" = "prop_fem",
+                                         "Redds/Female" = "redd_per_fem",
+                                         "Fecundity" = "fecund",
+                                         "Egg:Parr" = "egg_to_parr",
+                                         "Parr:Presmolt" = "parr_to_presmolt",
+                                         "Egg:Smolt" = "egg_to_smolt")) %>%
+               pivot_wider(id_cols = "Species",
+                           names_from = "Parameter",
+                           values_from = "Value")) %>%
+  mutate(Female_Escapement = reqs_summary$Female_Escapement_MN,
+         Redds = reqs_summary$Redds_MN,
+         Eggs = reqs_summary$Eggs_MN,
+         Parr = reqs_summary$Parr_MN,
+         Presmolts = reqs_summary$Presmolts_MN,
+         Smolts = reqs_summary$Smolts_MN) %>%
+  select(-c(prop_fem:egg_to_smolt)) %>%
+  pivot_longer(cols = c(Escapement, Female_Escapement:Smolts),
+               names_to = "Life Stage",
+               values_to = "Abundance") %>%
+  mutate(SE = c(NA, as.numeric(select(reqs_summary, ends_with("SE"))[1, ]), 
+                NA, as.numeric(select(reqs_summary, ends_with("SE"))[3, ]),
+                NA, as.numeric(select(reqs_summary, ends_with("SE"))[2, ]))) %>%
+  mutate(`90% CI, Lower` = c(NA, as.numeric(select(reqs_summary, ends_with("L90"))[1, ]), 
+                             NA, as.numeric(select(reqs_summary, ends_with("L90"))[3, ]),
+                             NA, as.numeric(select(reqs_summary, ends_with("L90"))[2, ]))) %>%
+  mutate(`90% CI, Upper` = c(NA, as.numeric(select(reqs_summary, ends_with("U90"))[1, ]), 
+                             NA, as.numeric(select(reqs_summary, ends_with("U90"))[3, ]),
+                             NA, as.numeric(select(reqs_summary, ends_with("U90"))[2, ])))
+
+```
+
+Life-stage specific capacity requirements were estimated using a Generalized Capacity Model (GCM) described in Appendix C of @IdahoOSCTeam2019. The model uses a combination of empirical and literature-based parameter estimates (Table \@ref(tab:param-tab)) to determine the capacity required to achieve a given adult escapement goal. We used the following escapement goals for Chinook salmon:
+
+* Catherine Creek: 3,000
+* Lookingglass Creek: 2,000
+* Upper Grande Ronde: 4,000
+
+We did not estimate capacity requirements for steelhead as the primary author is unaware of watershed-specific escapement goals for these watersheds. These escapement goals are considered high-range goals and are intended to represent *"healthy and harvestable abundance levels that would sustain very high levels of species viability, significant fishery opportunities and harvest, and a fuller range of ecological values"* [@CBPTF2020]. The required capacities to reach these goals were estimated using the GCM with a simulation approach to account for expected interannual variation in life history parameters. The simulation was conducted by repeatedly drawing applicable parameters from normal distributions with means and standard deviations defined in Table \@ref(tab:param-tab) and constrained within the range of observed values. Standard deviations for egg-to-parr and parr-to-presmolt survival parameters were set to zero due to small sample sizes, high variability, and potential bias leading to potentially unreliable results. Then, adult escapement goals were multiplied step-wise through the applicable parameter values to obtain capacity requirements by life-stage. For example, the number of redds necessary for recovery was calculated by multiplying the adult escapement goal by the female ratio and the estimated redds per female. We conducted 5,000 simulations, resulting in a range of capacity requirements that were summarized to provide the mean required capacity by life-stage with associated confidence intervals. Sources for each parameter estimate are provided in Table \@ref(tab:param-tab); however, those values can be modified if updated or in-basin estimates with empirical support are available.
+
+```{r param-tab}
+params %>%
+  select(-Min, -Max) %>%
+  kable(booktabs = T,
+        digits = 3,
+        align = "lcccc",
+        format.args = list(big.mark = ",",
+                           drop0trailing = T),
+        caption = "Life history parameters for the generalized capacity model and simulation.") %>%
+  kable_styling(full_width = F,
+                position = "center",
+                bootstrap_options = c("striped", 
+                                      "condensed"))
+
+```
+
+The resulting estimated habitat capacity requirements are shown in Table \@ref(tab:require-tab) and represent the necessary abundance at each life-stage to achieve adult escapement goals.
+
+```{r require-tab}
+rec_goals %>%
+  mutate(`90% CI` = paste0("(",
+                           round(`90% CI, Lower`, 0),
+                           " - ",
+                           round(`90% CI, Upper`,0),
+                           ")")) %>%
+  select(-`90% CI, Lower`, -`90% CI, Upper`) %>%
+  kable(booktabs = T,
+        digits = 0,
+        align = "cccccc",
+        format.args = list(big.mark = ",",
+                           drop0trailing = T),
+        col.names = c("Species", "Watershed", "Scenario", "Life Stage","Abundance", "SE", "90% CI"),
+        caption = "Life-stage specific habitat capacity requirement estimates necessary to achieve given escapement recovery goals for each watershed.") %>%
+  kable_styling(full_width = F,
+                position = "center",
+                bootstrap_options = c("striped", "condensed"))
+  
+
+```
 
 
 ## Available Capacity
 
-We define the available habitat carrying capacity as the maximal abundance or load the habitat can support for a given species and life-stage with current resources and habitat quantity and quality. Within fisheries research and management, it has been recognized that biotic and abiotic factors limit productivity within and across life-stages. However, we assume that observed fish density is a poor predictor of habitat capacity due to both a paucity of individuals (e.g., low spawner abundance) and the existence of unmeasured biotic or abiotic variables that may limit capacity. Therefore, available habitat capacity estimates were generated using a QRF framework developed by @See2021.
+We define the available habitat carrying capacity as the maximal abundance or load the habitat can support for a given species and life-stage with current resources and habitat quantity and quality. Within fisheries research and management, it has been recognized that biotic and abiotic factors limit productivity within and across life-stages. However, we assume that observed fish density is a poor predictor of habitat capacity due to both a paucity of individuals (e.g., low spawner abundance) and the existence of unmeasured biotic or abiotic variables that may limit capacity. Therefore, available habitat capacity estimates were generated using a QRF framework described by @See2021.
 
 
 ### QRF Model
@@ -180,7 +346,7 @@ QRF_new_hab_cov_tbl %>%
   select(-Covariate) %>%
   kable(booktabs = T,
         align = "ccccccccl",
-        caption = "Habitat covariates and their descriptions used in each of the QRF capacity models. Numbers indicate where each metric ranked in relative importance for each model. Dots indicate a metric was not used for a given model.") %>%
+        caption = "Habitat covariates and their descriptions used in each of the QRF capacity models. Numbers indicate where each metric ranked in relative importance for each model. Dashes indicate a metric was not used for a given model.") %>%
   kable_styling(position = "center",
                 bootstrap_options = c("striped", "condensed"))
 
@@ -191,7 +357,7 @@ QRF_new_hab_cov_tbl %>%
 
 Although we have hundreds of sites across the Columbia River basin with detailed habitat data that were used to estimate capacity with the QRF model, this only covers a small percentage of the anadromous zone within each watershed. Additionally, many watersheds do not contain any sites. Therefore, we extrapolated our capacity predictions to the areas between CHaMP sites using a [stream layer](https://www.nwfsc.noaa.gov/research/datatech/data/col_basin_hist_project/index.cfm) available from NOAA fisheries. This layer consists of a polyline shapefile divided into 200m reaches with various attributes associated with each reach. We refer to these as globally available attributes (GAAs) because they are associated with every reach across all watersheds in the Columbia River Basin. The shapefile is derived  from the [National Hydrography Dataset High Resolution](https://www.usgs.gov/core-science-systems/ngp/national-hydrography/nhdplus-high-resolution) (NHDPlus HR) dataset, which has a high resolution, 1:24,000.
 
-We estimated capacity for target watersheds in the Grande Ronde basin by quantifying the relationships between GAAs and QRF capacity predictions at all of the sites used the populate the QRF model. This was conducted using a second random forest model, with GAAs as covariates and QRF-predicted densities (linear or areal) as the response. The random forest approach allows for non-linear associations between capacity and GAAs, and constricts capacity predictions within the estimated range from the initial QRF model. Densities predictions for the Grande Ronde watersheds were calculated for 200m reach segments using the random forest model with GAA inputs, and reach capacity was calculated by multiplying the predicted fish/m by the length of the reach. Capacity for specific regions were then calculated by summing capacities for all reaches within the region.
+We estimated capacity for target watersheds in the upper Grande Ronde Subbasin by quantifying the relationships between GAAs and QRF capacity predictions at all of the sites used the populate the QRF model. This was conducted using a second random forest model, with GAAs as covariates and QRF-predicted densities (linear or areal) as the response. The random forest approach allows for non-linear associations between capacity and GAAs, and constricts capacity predictions within the estimated range from the initial QRF model. Density predictions for these Grande Ronde watersheds were calculated for 200m reach segments using the random forest model with GAA inputs, and reach capacity was calculated by multiplying the predicted fish/m by the length of the reach. Capacity for specific regions were then calculated by summing capacities for all reaches within the region.
 
 ```{r gaa-tbl}
 load(here("analysis/data/derived_data/gaa_hab_dict.rda"))
@@ -397,7 +563,7 @@ cap_totals = list(cc_chnk_sum = cc_chnk_sum_cap,
 
 ```
 
-Estimates of total habitat capacity for target watersheds in the Grande Ronde Basin by species and life-stage are shown in Table \@ref(tab:cap-table). Estimates were made using the anadromous spatial domain defined in [StreamNet](https://www.streamnet.org/home/data-maps/gis-data-sets/) for Chinook salmon and steelhead. Capacity was extrapolated within these domains for `r unique(cap_totals$n_rchs[cap_totals$Species == "Chinook"])` reaches totaling `r round(unique(cap_totals$tot_length[cap_totals$Species == "Chinook"]) / 1000)` km in length for Chinook salmon and `r prettyNum(unique(cap_totals$n_rchs[cap_totals$Species == "Steelhead"]), big.mark = ",")` reaches totaling `r round(unique(cap_totals$tot_length[cap_totals$Species == "Steelhead"]) / 1000)` km in length for steelhead. Different spatial domains could be used for both Chinook salmon and steelhead if deemed appropriate. Capacity estimates for individual streams by species and life stage are provided in [Supplemental Tables and Figures](#supplemental-tables-and-figures). 
+Estimates of total habitat capacity for target watersheds in the Grande Ronde Basin by species and life-stage are shown in Table \@ref(tab:cap-table). Estimates were made using the anadromous spatial domain defined in [StreamNet](https://www.streamnet.org/home/data-maps/gis-data-sets/) for Chinook salmon and steelhead. Different spatial domains could be used for both Chinook salmon and steelhead if deemed appropriate.
 
 ```{r cap-table}
 cap_totals %>%
@@ -430,7 +596,8 @@ cap_totals %>%
 
 ```
 
-Maps depicting capacity extrapolations are useful to visualize low- versus high-capacity areas and can inform prioritization efforts. Data used to generate these maps have been exported in geopackage file format and are available in the [GrandeRondeQRF GitHub repository](https://github.com/Mount-Hood-Environmental/GrandeRondeQRF). Chinook salmon and steelhead capacity extrapolations are shown in Figures \@ref(fig:sthd-maps) and \@ref(fig:sthd-maps), respectively.
+Maps depicting capacity extrapolations are useful to visualize low- versus high-capacity areas and can inform prioritization efforts. Data used to generate these maps have been exported in geopackage file format and are available in the [GrandeRondeQRF GitHub repository](https://github.com/Mount-Hood-Environmental/GrandeRondeQRF). 
+Chinook salmon capacity extrapolations for Catherine Creek, Lookingglass Creek, and Upper Grande Ronde River are shown in Figures \@ref(fig:cc-chnk-maps), \@ref(fig:look-chnk-maps), and \@ref(fig:ugr-chnk-maps), respectively. Extrapolations for steelhead for Catherine Creek, Lookingglass Creek, and Upper Grande Ronde River are shown in Figures \@ref(fig:cc-sthd-maps), \@ref(fig:look-sthd-maps), and \@ref(fig:ugr-sthd-maps), respectively.
 
 ```{r create-chnk-maps}
 # pick a background river color
@@ -618,16 +785,24 @@ look_chnk_redd_map = look_redd_sf %>%
 
 ```
 
-```{r chnk-maps, fig.cap = "Extrapolations of habitat capacity for Chinook salmon, by life-stage, for target watersheds within the Grande Ronde Basin."}
+```{r cc-chnk-maps, fig.cap = "Extrapolations of habitat capacity for Chinook salmon, by life-stage, in Catherine Creek."}
 ggarrange(cc_chnk_sum_map,
           cc_chnk_win_map,
-          cc_chnk_redd_map,
-          ugr_chnk_sum_map,
-          ugr_chnk_win_map,
-          ugr_chnk_redd_map,
-          look_chnk_sum_map,
+          cc_chnk_redd_map)
+
+```
+
+```{r look-chnk-maps, fig.cap = "Extrapolations of habitat capacity for Chinook salmon, by life-stage, in Lookingglass Creek."}
+ggarrange(look_chnk_sum_map,
           look_chnk_win_map,
           look_chnk_redd_map)
+
+```
+
+```{r ugr-chnk-maps, fig.cap = "Extrapolations of habitat capacity for Chinook salmon, by life-stage, in Upper Grande Ronde River."}
+ggarrange(ugr_chnk_sum_map,
+          ugr_chnk_win_map,
+          ugr_chnk_redd_map)
 
 ```
 
@@ -814,24 +989,74 @@ look_sthd_redd_map = look_redd_sf %>%
 
 ```
 
-```{r sthd-maps, fig.cap = "Extrapolations of habitat capacity for steelhead, by life-stage, for target watersheds within the Grande Ronde Basin."}
+```{r cc-sthd-maps, fig.cap = "Extrapolations of habitat capacity for steelhead, by life-stage, in Catherine Creek."}
 ggarrange(cc_sthd_sum_map,
           cc_sthd_win_map,
-          cc_sthd_redd_map,
-          ugr_sthd_sum_map,
-          ugr_sthd_win_map,
-          ugr_sthd_redd_map,
-          look_sthd_sum_map,
+          cc_sthd_redd_map)
+
+```
+
+```{r look-sthd-maps, fig.cap = "Extrapolations of habitat capacity for steelhead, by life-stage, in Lookingglass Creek."}
+ggarrange(look_sthd_sum_map,
           look_sthd_win_map,
           look_sthd_redd_map)
+
+```
+
+```{r ugr-sthd-maps, fig.cap = "Extrapolations of habitat capacity for steelhead, by life-stage, in Upper Grande Ronde River."}
+ggarrange(ugr_sthd_sum_map,
+          ugr_sthd_win_map,
+          ugr_sthd_redd_map)
 
 ```
 
 
 ## Capacity Limitations
 
-Capacity limitation stuff here...
+Finally, habitat capacity limitations were quantified by subtracting required capacity from available capacity (Table \@ref(tab:cap-limits)). When required capacity exceeded available capacity, this represented an estimated habitat capacity deficit in the target watersheds. Deficits can be used to identify potential species and life-stage limitations in physical habitat quantity and/or quality. Relative habitat capacity deficits were also calculated as available capacity divided by required capacity (Table \@ref(tab:cap-limits)) to provide guidance on species and life stages where rehabilitation efforts could be targeted.
 
+```{r cap-limits}
+cap_limits = rec_goals %>%
+  left_join(cap_totals %>%
+              select(-n_rchs,
+                     -tot_length) %>%
+              mutate(LifeStage = recode(LifeStage,
+                                        "Summer Juveniles" = "Parr",
+                                        "Winter Juveniles" = "Presmolts")),
+            by = c("Species",
+                   "Watershed",
+                   "Life Stage" = "LifeStage")) %>%
+  filter(`Life Stage` != "Smolts") %>%
+  mutate(Deficit = Abundance - tot_cap,
+         `Relative Deficit` = Deficit / tot_cap) %>%
+  rename(`Required Capacity` = Abundance,
+         `Available Capacity` = tot_cap,
+         `Capacity SE` = tot_cap_se) %>%
+  select(-tot_cap_90CI_U, 
+         -tot_cap_90CI_L, 
+         -`90% CI, Lower`, 
+         -`90% CI, Upper`) %>%
+  kable(booktabs = T,
+        digits = c(0,0,0,0,0,0,0,0,0,2),
+        align = "ccccccccccccc",
+        format.args = list(big.mark = ","),
+        col.names = c("Species",
+                      "Watershed",
+                      "Scenario",
+                      "Life Stage",
+                      "Required Capacity", 
+                      "Required Capacity SE",
+                      "Available Capacity",
+                      "Available Capacity SE",
+                      "Deficit",
+                      "Relative Deficit"),
+        caption = "Capacity deficits and relative deficits based on recovery goals.") %>%
+  kable_styling(full_width = F,
+                position = "center",
+                bootstrap_options = c("striped", "condensed"))
+cap_limits
+
+```
 
 # Literature Cited
 
