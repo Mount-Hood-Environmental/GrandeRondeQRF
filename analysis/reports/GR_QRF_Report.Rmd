@@ -569,7 +569,7 @@ Estimates of total habitat capacity for target watersheds in the Grande Ronde Ba
 cap_totals %>%
   mutate(avg_cap_per_m = tot_cap / tot_length) %>%
   mutate(tot_length_km = tot_length / 1000,
-         `90% CI` = paste0("(", round(tot_cap_90CI_L, 0), "-", round(tot_cap_90CI_U, 0),")")) %>%
+         `90% CI` = paste0("(", round(tot_cap_90CI_L, 0), " - ", round(tot_cap_90CI_U, 0),")")) %>%
   rename(`n Reaches` = n_rchs,
          `Stream Length (km)` = tot_length_km,
          Capacity = tot_cap,
@@ -585,7 +585,7 @@ cap_totals %>%
          `90% CI`,
          `Avg. Capacity / m`) %>%
   kable(booktabs = T,
-        digits = c(0, 0, 1, 0, 0, 0, 0, 3),
+        digits = c(0, 0, 0, 0, 0, 0, 0, 0, 2),
         align = "ccccccccc",
         format.args = list(big.mark = ","),
         col.names = c("Watershed","Species","Life-stage","Reaches","Stream Length (km)", "Capacity","SE", "Capacity 90% CI","Avg. Capacity/m"),
