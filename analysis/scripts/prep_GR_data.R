@@ -1,7 +1,7 @@
 # Authors: Mike Ackerman
 # Purpose: Prep data to be used for QRF assessments in the Grande Ronde
 # Created: 8/11/2022
-# Last Modified:
+# Last Modified: 11/9/2022
 # Notes:
 
 #--------------------------
@@ -200,8 +200,7 @@ save(cc_poly,
      file = "analysis/data/derived_data/gr_spatial.rda")
 
 #--------------------------
-# save as geopackages for use in QGIS
-
+# save as shapefiles for use in QGIS
 # catherine creek
 st_write(cc_sum_sf,
          dsn = "analysis/data/derived_data/shp/cc_juv_sum_qrf.shp",
