@@ -1,0 +1,13 @@
+Species,Parameter,Value,SD,Min,Max,Source,Detail
+Chinook,Female Ratio,0.432,0.04,0.324,0.557,Kinzer et al 2020,Snake River basin monitoring data collected at Lower Granite dam
+Chinook,Redds/Female,0.772,0.264,0.52,2.45,"Upper Salmon, Pahsimeroi weirs and RST monitoring data, Lemhi PIT arrays & redd surveys",38 total years of monitoring data in 3 watersheds
+Chinook,Fecundity,3726,655.8,2857,5191,Gallinat and Kiefel 2020,30-year dataset of natural-origin fish spawned at Tucannon hatchery
+Chinook,Egg:Parr,0.1,NA,NA,NA,Gallinat and Kiefel 2020,20-year dataset of in-river natural-origin egg and parr production
+Chinook,Parr:Presmolt,0.405,NA,NA,NA,Lemhi River Empirical Data,Estimated from Lemhi PIT arrays and redd surveys
+Chinook,Egg:Smolt,0.047,0.028,0,0.102,Gallinat and Kiefel 2020,20-year dataset of in-river natural-origin egg and smolt production
+Steelhead,Female Ratio,0.662,0.03,0.542,0.751,Kinzer et al 2020,Snake River basin monitoring data collected at Lower Granite dam
+Steelhead,Redds/Female,0.892,0.293,0.37,1.52,Jonasson et al 2016,15 years of Grande Ronde River Subbasin redd survey data
+Steelhead,Fecundity,4926,459,4688,5987,"IDFG, Personal Communication",Sawtooth and Pahsimeroi hatcheries
+Steelhead,Egg:Parr,0.134,NA,NA,NA,McHugh et al 2017,LCM model for Middle Fork John Day steelhead
+Steelhead,Parr:Presmolt,0.359,NA,NA,NA,McHugh et al 2017,LCM model for Middle Fork John Day steelhead
+Steelhead,Egg:Smolt,0.0083,0.0045,0.0044,0.0158,White et al 2007,12 years of Umatilla natural-origin steelhead data
