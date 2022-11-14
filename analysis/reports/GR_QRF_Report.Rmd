@@ -159,7 +159,7 @@ knitr::include_graphics("../figures/hab-capac-fig.png")
 ## Required Capacity
 
 ```{r get-params}
-params = read_csv(here("analysis/data/raw_data/LifeHistoryParameters_0622.csv")) %>%
+params = read_csv(here("analysis/data/raw_data/LifeHistoryParameters.csv")) %>%
   filter(Species == "Chinook")
 
 # define target escapement
@@ -1013,7 +1013,7 @@ ggarrange(ugr_sthd_sum_map,
 
 ## Capacity Limitations
 
-Finally, habitat capacity limitations were quantified by subtracting required capacity from available capacity (Table \@ref(tab:cap-limits)). When required capacity exceeded available capacity, this represented an estimated habitat capacity deficit in the target watersheds. Deficits can be used to identify potential species and life-stage limitations in physical habitat quantity and/or quality. Relative habitat capacity deficits were also calculated as available capacity divided by required capacity (Table \@ref(tab:cap-limits)) to provide guidance on species and life stages where rehabilitation efforts could be targeted.
+Finally, habitat capacity limitations were quantified by subtracting required capacity from available capacity (Table \@ref(tab:cap-limits)). When required capacity exceeded available capacity, this represented an estimated habitat capacity deficit in the target watersheds. Negative deficits indicate that the available capacity is greater than the required amount to meet escapement goals. Deficits can be used to identify potential species and life-stage limitations in physical habitat quantity and/or quality. Relative habitat capacity deficits were also calculated as available capacity divided by required capacity (Table \@ref(tab:cap-limits)) to provide guidance on species and life stages where rehabilitation efforts could be targeted.
 
 ```{r cap-limits}
 cap_limits = rec_goals %>%
